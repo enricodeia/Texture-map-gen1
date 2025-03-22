@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Texture Map Generator</title>
+    <title>3D Texture Lab</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -15,26 +15,33 @@
         </header>
 
         <main>
-            <div class="upload-container">
-                <div class="upload-area" id="upload-area">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Drag & drop your texture image or</p>
-                    <label for="texture-upload" class="upload-btn">Browse Files</label>
-                    <input type="file" id="texture-upload" accept="image/*" hidden>
-                    <p class="upload-hint">Supported formats: JPG, PNG, WebP</p>
+            <div class="top-container">
+                <div class="upload-section">
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-content">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Drag & drop your texture image or</p>
+                            <label for="texture-upload" class="upload-btn">Browse Files</label>
+                            <input type="file" id="texture-upload" accept="image/*" hidden>
+                            <p class="upload-hint">Supported formats: JPG, PNG, WebP</p>
+                        </div>
+                        <div class="preview-overlay" id="preview-overlay">
+                            <img id="uploaded-image" src="" alt="Uploaded texture">
+                            <button class="delete-btn" id="delete-image">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <div class="preview-image" id="image-preview">
-                    <img id="uploaded-image" src="" alt="Uploaded texture">
-                </div>
-            </div>
-
-            <div class="preview-container">
+                
                 <div class="preview-3d">
                     <div id="sphere-container"></div>
                 </div>
-                <div class="controls">
-                    <h3>Texture Settings</h3>
-                    
+            </div>
+
+            <div class="controls-container">
+                <h3>Texture Settings</h3>
+                <div class="controls-grid">
                     <div class="control-group">
                         <label for="diffuse-strength">Diffuse Strength</label>
                         <div class="slider-container">
@@ -54,7 +61,7 @@
                     <div class="control-group">
                         <label for="bump-strength">Bump Strength</label>
                         <div class="slider-container">
-                            <input type="range" id="bump-strength" min="0" max="1" step="0.01" value="0.5">
+                            <input type="range" id="bump-strength" min="0" max="2" step="0.01" value="0.5">
                             <span class="value" id="bump-value">0.5</span>
                         </div>
                     </div>
@@ -75,7 +82,7 @@
                         </div>
                     </div>
                     
-                    <div class="control-group">
+                    <div class="control-group light-group">
                         <label>Light Position</label>
                         <div class="light-controls">
                             <div class="light-control">
@@ -121,7 +128,7 @@
         </main>
 
         <footer>
-            <p>Created with <i class="fas fa-heart"></i> for 3D creatives and developers</p>
+            <p>Designed with <i class="fas fa-heart"></i> by <a href="https://enricodeiana.design/" target="_blank">Enrico Deiana</a></p>
         </footer>
     </div>
 
