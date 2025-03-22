@@ -1,8 +1,9 @@
 // Global variables
 let scene, camera, renderer, sphere, light;
-let diffuseTexture, normalTexture, bumpTexture;
+let diffuseTexture, normalTexture, bumpTexture, displacementTexture;
 let originalImageData;
 let hasUploadedImage = false;
+let controls;
 
 // DOM Elements
 const uploadArea = document.getElementById('upload-area');
