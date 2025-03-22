@@ -4,33 +4,6 @@ let diffuseTexture, normalTexture, bumpTexture, displacementTexture;
 let originalImageData;
 let hasUploadedImage = false;
 
-// DOM Elements
-const uploadArea = document.getElementById('upload-area');
-const uploadContent = document.querySelector('.upload-content');
-const textureUpload = document.getElementById('texture-upload');
-const previewOverlay = document.getElementById('preview-overlay');
-const uploadedImage = document.getElementById('uploaded-image');
-const deleteImageBtn = document.getElementById('delete-image');
-const sphereContainer = document.getElementById('sphere-container');
-const diffuseCanvas = document.getElementById('diffuse-map');
-const normalCanvas = document.getElementById('normal-map');
-const bumpCanvas = document.getElementById('bump-map');
-const displacementCanvas = document.getElementById('displacement-map');
-const exportAllBtn = document.getElementById('export-all');
-
-// DOM Elements
-const uploadArea = document.getElementById('upload-area');
-const uploadContent = document.querySelector('.upload-content');
-const textureUpload = document.getElementById('texture-upload');
-const previewOverlay = document.getElementById('preview-overlay');
-const uploadedImage = document.getElementById('uploaded-image');
-const deleteImageBtn = document.getElementById('delete-image');
-const sphereContainer = document.getElementById('sphere-container');
-const diffuseCanvas = document.getElementById('diffuse-map');
-const normalCanvas = document.getElementById('normal-map');
-const bumpCanvas = document.getElementById('bump-map');
-const displacementCanvas = document.getElementById('displacement-map');
-
 // Control Elements
 const diffuseStrength = document.getElementById('diffuse-strength');
 const normalStrength = document.getElementById('normal-strength');
@@ -56,6 +29,19 @@ const downloadNormal = document.getElementById('download-normal');
 const downloadBump = document.getElementById('download-bump');
 const downloadDisplacement = document.getElementById('download-displacement');
 
+// DOM Elements - Get these after other variables to avoid duplicate declarations
+const uploadArea = document.getElementById('upload-area');
+const uploadContent = document.querySelector('.upload-content');
+const textureUpload = document.getElementById('texture-upload');
+const previewOverlay = document.getElementById('preview-overlay');
+const uploadedImage = document.getElementById('uploaded-image');
+const deleteImageBtn = document.getElementById('delete-image');
+const sphereContainer = document.getElementById('sphere-container');
+const diffuseCanvas = document.getElementById('diffuse-map');
+const normalCanvas = document.getElementById('normal-map');
+const bumpCanvas = document.getElementById('bump-map');
+const displacementCanvas = document.getElementById('displacement-map');
+
 // Initialize the application
 function init() {
     // Make sure THREE is loaded before continuing
@@ -78,7 +64,7 @@ function init() {
 function initThreeJS() {
     // Create scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1A1A2E);
+    scene.background = new THREE.Color(0x0d1117);
 
     // Create camera
     camera = new THREE.PerspectiveCamera(75, sphereContainer.clientWidth / sphereContainer.clientHeight, 0.1, 1000);
@@ -264,11 +250,6 @@ function setupEventListeners() {
     downloadNormal.addEventListener('click', () => downloadTexture(normalCanvas, 'normal-map'));
     downloadBump.addEventListener('click', () => downloadTexture(bumpCanvas, 'bump-map'));
     downloadDisplacement.addEventListener('click', () => downloadTexture(displacementCanvas, 'displacement-map'));
-    
-    // Export all button
-    if (exportAllBtn) {
-        exportAllBtn.addEventListener('click', exportAllTextures);
-    }
 }
 
 // Clear the uploaded image
@@ -634,7 +615,7 @@ function applyGaussianBlur(data, width, height) {
     return result;
 }
 
-// Detect edges for the bump map
+// Detect edges for texture maps
 function detectEdges(data, width, height) {
     const sobelX = [
         -1, 0, 1,
@@ -681,49 +662,6 @@ function detectEdges(data, width, height) {
     }
     
     return result;
-}
-
-// Create a detailed height map with frequency analysis
-function createDetailedHeightMap(grayscale, width, height) {
-    // Apply multiple levels of frequency detail
-    const baseLayer = applyGaussianBlur(grayscale, width, height);
-    const detailLayer = new Array(grayscale.length);
-    
-    // Calculate the detail layer by subtracting the blurred image from the original
-    for (let i = 0; i < grayscale.length; i++) {
-        detailLayer[i] = Math.max(0, grayscale[i] - baseLayer[i]);
-    }
-    
-    // Normalize detail layer
-    const maxDetail = Math.max(...detailLayer);
-    if (maxDetail > 0) {
-        for (let i = 0; i < detailLayer.length; i++) {
-            detailLayer[i] = (detailLayer[i] / maxDetail) * 127; // Scale to mid-range
-        }
-    }
-    
-    // Create the final height map by combining layers with an adaptive blend
-    const finalMap = new Array(grayscale.length);
-    for (let i = 0; i < grayscale.length; i++) {
-        // Use base layer as overall shape, add detail
-        finalMap[i] = Math.min(255, baseLayer[i] + detailLayer[i]);
-    }
-    
-    // Apply contrast enhancement
-    enhanceContrast(finalMap, 1.2);
-    
-    return finalMap;
-}
-
-// Enhance contrast of an array
-function enhanceContrast(array, factor) {
-    // Find the average value
-    const avg = array.reduce((sum, val) => sum + val, 0) / array.length;
-    
-    // Apply contrast adjustment centered around average
-    for (let i = 0; i < array.length; i++) {
-        array[i] = Math.max(0, Math.min(255, avg + (array[i] - avg) * factor));
-    }
 }
 
 // Update textures based on slider values
