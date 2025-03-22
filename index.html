@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texture Map Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Texture Map Generator</h1>
+            <p>Generate normal, diffuse, and bump maps from any texture</p>
+        </header>
+
+        <main>
+            <div class="upload-container">
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & drop your texture image or</p>
+                    <label for="texture-upload" class="upload-btn">Browse Files</label>
+                    <input type="file" id="texture-upload" accept="image/*" hidden>
+                </div>
+                <div class="preview-image" id="image-preview">
+                    <img id="uploaded-image" src="" alt="Uploaded texture">
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <div class="preview-3d">
+                    <div id="sphere-container"></div>
+                </div>
+                <div class="controls">
+                    <h3>Texture Settings</h3>
+                    
+                    <div class="control-group">
+                        <label for="diffuse-strength">Diffuse Strength</label>
+                        <div class="slider-container">
+                            <input type="range" id="diffuse-strength" min="0" max="1" step="0.01" value="1">
+                            <span class="value" id="diffuse-value">1.0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="normal-strength">Normal Strength</label>
+                        <div class="slider-container">
+                            <input type="range" id="normal-strength" min="0" max="2" step="0.01" value="1">
+                            <span class="value" id="normal-value">1.0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="bump-strength">Bump Strength</label>
+                        <div class="slider-container">
+                            <input type="range" id="bump-strength" min="0" max="1" step="0.01" value="0.5">
+                            <span class="value" id="bump-value">0.5</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="roughness">Roughness</label>
+                        <div class="slider-container">
+                            <input type="range" id="roughness" min="0" max="1" step="0.01" value="0.5">
+                            <span class="value" id="roughness-value">0.5</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="metalness">Metalness</label>
+                        <div class="slider-container">
+                            <input type="range" id="metalness" min="0" max="1" step="0.01" value="0">
+                            <span class="value" id="metalness-value">0.0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Light Position</label>
+                        <div class="light-controls">
+                            <div class="light-control">
+                                <span>X</span>
+                                <input type="range" id="light-x" min="-10" max="10" step="0.1" value="5">
+                            </div>
+                            <div class="light-control">
+                                <span>Y</span>
+                                <input type="range" id="light-y" min="-10" max="10" step="0.1" value="5">
+                            </div>
+                            <div class="light-control">
+                                <span>Z</span>
+                                <input type="range" id="light-z" min="-10" max="10" step="0.1" value="5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-container">
+                <div class="map-preview">
+                    <h3>Diffuse Map</h3>
+                    <canvas id="diffuse-map"></canvas>
+                    <button class="download-btn" id="download-diffuse">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="map-preview">
+                    <h3>Normal Map</h3>
+                    <canvas id="normal-map"></canvas>
+                    <button class="download-btn" id="download-normal">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+                <div class="map-preview">
+                    <h3>Bump Map</h3>
+                    <canvas id="bump-map"></canvas>
+                    <button class="download-btn" id="download-bump">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Created with <i class="fas fa-heart"></i> for 3D creatives and developers</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/OrbitControls/2.0.0/OrbitControls.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
