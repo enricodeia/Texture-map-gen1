@@ -9,10 +9,17 @@
 </head>
 <body>
     <div class="app-container">
-        <header>
-            <h1>Texture Gen v1</h1>
-            <p>Create professional diffuse, normal, bump & displacement maps instantly</p>
-        </header>
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>Texture Gen v1</h1>
+                <p>Create professional diffuse, normal, bump & displacement maps instantly</p>
+            </div>
+            <div class="nav-actions">
+                <button id="export-all" class="export-btn">
+                    <i class="fas fa-file-archive"></i> Export All
+                </button>
+            </div>
+        </nav>
 
         <main>
             <div class="top-container">
@@ -28,7 +35,7 @@
                         <div class="preview-overlay" id="preview-overlay">
                             <img id="uploaded-image" src="" alt="Uploaded texture">
                             <button class="delete-btn" id="delete-image">
-                                <i class="fas fa-trash-alt"></i>
+                                <i class="fas fa-times"></i>
                             </button>
                         </div>
                     </div>
@@ -112,32 +119,40 @@
 
             <div class="map-container">
                 <div class="map-preview">
-                    <h3>Diffuse Map</h3>
+                    <div class="map-header">
+                        <h3>Diffuse Map</h3>
+                        <button class="download-btn" id="download-diffuse">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
                     <canvas id="diffuse-map"></canvas>
-                    <button class="download-btn" id="download-diffuse">
-                        <i class="fas fa-download"></i> Download
-                    </button>
                 </div>
                 <div class="map-preview">
-                    <h3>Normal Map</h3>
+                    <div class="map-header">
+                        <h3>Normal Map</h3>
+                        <button class="download-btn" id="download-normal">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
                     <canvas id="normal-map"></canvas>
-                    <button class="download-btn" id="download-normal">
-                        <i class="fas fa-download"></i> Download
-                    </button>
                 </div>
                 <div class="map-preview">
-                    <h3>Bump Map</h3>
+                    <div class="map-header">
+                        <h3>Bump Map</h3>
+                        <button class="download-btn" id="download-bump">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
                     <canvas id="bump-map"></canvas>
-                    <button class="download-btn" id="download-bump">
-                        <i class="fas fa-download"></i> Download
-                    </button>
                 </div>
                 <div class="map-preview">
-                    <h3>Displacement Map</h3>
+                    <div class="map-header">
+                        <h3>Displacement Map</h3>
+                        <button class="download-btn" id="download-displacement">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
                     <canvas id="displacement-map"></canvas>
-                    <button class="download-btn" id="download-displacement">
-                        <i class="fas fa-download"></i> Download
-                    </button>
                 </div>
             </div>
         </main>
@@ -149,6 +164,10 @@
 
     <!-- Three.js library only - NO OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
+    <!-- Add JSZip for exporting all textures as a zip file -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FileSaver.js for saving the generated zip file -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <!-- Your script comes last -->
     <script src="script.js"></script>
 </body>
