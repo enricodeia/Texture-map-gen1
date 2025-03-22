@@ -67,25 +67,8 @@ body {
     font-size: 0.9rem;
 }
 
-.export-btn {
-    background-color: var(--primary-green);
-    color: var(--text-primary);
-    border: none;
-    border-radius: var(--radius-md);
-    padding: var(--space-2) var(--space-4);
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    transition: background-color 0.2s;
-}
-
-.export-btn:hover {
-    background-color: var(--hover-color);
-}
-
-.export-btn i {
+.nav-actions .action-text {
+    color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
