@@ -11,7 +11,7 @@
     <div class="app-container">
         <header>
             <h1>3D Texture Lab</h1>
-            <p>Create professional diffuse, normal & bump maps instantly</p>
+            <p>Create professional diffuse, normal, bump & displacement maps instantly</p>
         </header>
 
         <main>
@@ -143,12 +143,15 @@
         </main>
 
         <footer>
-            <p>Designed with <i class="fas fa-heart"></i> by <a href="https://enricodeiana.design/" target="_blank">Enrico Deiana</a></p>
+            <p>Designed by <a href="https://enricodeiana.design/" target="_blank">Enrico Deiana</a></p>
         </footer>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r140/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.140.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Three.js library - Make sure this loads first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
+    <!-- OrbitControls after Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Your script comes last -->
     <script src="script.js"></script>
 </body>
 </html>
