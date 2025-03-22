@@ -45,15 +45,27 @@ const downloadDisplacement = document.getElementById('download-displacement');
 
 // Initialize the application
 function init() {
-    initThreeJS();
-    setupEventListeners();
+    // Make sure THREE is loaded before continuing
+    if (typeof THREE === 'undefined') {
+        console.error('THREE is not defined. Please check if Three.js is loaded correctly.');
+        showNotification('Error loading Three.js. Please refresh the page.', 'error');
+        return;
+    }
+    
+    try {
+        initThreeJS();
+        setupEventListeners();
+    } catch (error) {
+        console.error('Error initializing application:', error);
+        showNotification('Error initializing the application. Please refresh the page.', 'error');
+    }
 }
 
 // Initialize Three.js scene
 function initThreeJS() {
     // Create scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0c0c16);
+    scene.background = new THREE.Color(0x1A1A2E);
 
     // Create camera
     camera = new THREE.PerspectiveCamera(75, sphereContainer.clientWidth / sphereContainer.clientHeight, 0.1, 1000);
@@ -64,9 +76,8 @@ function initThreeJS() {
     renderer.setSize(sphereContainer.clientWidth, sphereContainer.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.physicallyCorrectLights = true;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.0;
-    renderer.outputEncoding = THREE.sRGBEncoding;
+    
+    // Append renderer to container
     sphereContainer.appendChild(renderer.domElement);
 
     // Create lighting
@@ -101,12 +112,17 @@ function initThreeJS() {
         }, 500);
     }, 1500);
 
-    // Set up orbit controls - using the correct THREE.OrbitControls syntax
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 1.0;
+    // Set up orbit controls
+    if (typeof THREE.OrbitControls === 'undefined') {
+        console.error('THREE.OrbitControls is not defined. Please check if OrbitControls is loaded correctly.');
+        showNotification('Error loading 3D controls. Limited functionality available.', 'error');
+    } else {
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.0;
+    }
 
     // Handle window resize
     window.addEventListener('resize', onWindowResize);
@@ -166,22 +182,28 @@ function createSphere() {
 function animate() {
     requestAnimationFrame(animate);
     
-    // Update controls
-    controls.update();
+    // Update controls if they exist
+    if (controls) {
+        controls.update();
+    }
     
     // Add a subtle animation to the sphere
     if (sphere) {
         sphere.rotation.y += 0.001;
     }
     
-    renderer.render(scene, camera);
+    if (renderer) {
+        renderer.render(scene, camera);
+    }
 }
 
 // Handle window resize
 function onWindowResize() {
-    camera.aspect = sphereContainer.clientWidth / sphereContainer.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(sphereContainer.clientWidth, sphereContainer.clientHeight);
+    if (camera && renderer && sphereContainer) {
+        camera.aspect = sphereContainer.clientWidth / sphereContainer.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(sphereContainer.clientWidth, sphereContainer.clientHeight);
+    }
 }
 
 // Set up event listeners
@@ -252,6 +274,7 @@ function clearImage() {
         sphere.material.map = null;
         sphere.material.normalMap = null;
         sphere.material.bumpMap = null;
+        sphere.material.displacementMap = null;
         sphere.material.needsUpdate = true;
     }
     
@@ -301,39 +324,62 @@ function processUploadedFile(file) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
-        // Display the image
-        uploadedImage.src = e.target.result;
-        previewOverlay.style.display = 'flex';
-        hasUploadedImage = true;
-        
-        // Load the image to process it
-        const img = new Image();
-        img.onload = function() {
-            // Store original image data
-            originalImageData = getImageData(img);
+        try {
+            // Display the image
+            uploadedImage.src = e.target.result;
+            previewOverlay.style.display = 'flex';
+            hasUploadedImage = true;
             
-            // Generate texture maps
-            generateTextureMaps(img);
-            
-            // Apply to sphere
-            updateTextures();
-            
-            // Remove loading state
-            setTimeout(() => {
-                uploadArea.classList.remove('processing');
-                loadingEl.classList.add('fade-out');
-                setTimeout(() => {
-                    if (loadingEl.parentNode) {
-                        loadingEl.parentNode.removeChild(loadingEl);
-                    }
-                    showNotification('Texture maps generated successfully!', 'success');
-                }, 500);
-            }, 1000);
-        };
-        img.src = e.target.result;
+            // Load the image to process it
+            const img = new Image();
+            img.onload = function() {
+                try {
+                    // Store original image data
+                    originalImageData = getImageData(img);
+                    
+                    // Generate texture maps
+                    generateTextureMaps(img);
+                    
+                    // Apply to sphere
+                    updateTextures();
+                    
+                    // Remove loading state
+                    setTimeout(() => {
+                        uploadArea.classList.remove('processing');
+                        loadingEl.classList.add('fade-out');
+                        setTimeout(() => {
+                            if (loadingEl.parentNode) {
+                                loadingEl.parentNode.removeChild(loadingEl);
+                            }
+                            showNotification('Texture maps generated successfully!', 'success');
+                        }, 500);
+                    }, 1000);
+                } catch (error) {
+                    console.error('Error processing image:', error);
+                    handleProcessingError(loadingEl);
+                }
+            };
+            img.src = e.target.result;
+        } catch (error) {
+            console.error('Error loading image:', error);
+            handleProcessingError(loadingEl);
+        }
+    };
+    
+    reader.onerror = function() {
+        handleProcessingError(loadingEl);
     };
     
     reader.readAsDataURL(file);
+}
+
+// Handle processing error
+function handleProcessingError(loadingEl) {
+    uploadArea.classList.remove('processing');
+    if (loadingEl && loadingEl.parentNode) {
+        loadingEl.parentNode.removeChild(loadingEl);
+    }
+    showNotification('Error processing image. Please try another image.', 'error');
 }
 
 // Show notification
@@ -400,8 +446,9 @@ function generateDiffuseMap(img) {
     
     // Create diffuse texture
     diffuseTexture = new THREE.Texture(diffuseCanvas);
-    diffuseTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    diffuseTexture.encoding = THREE.sRGBEncoding;
+    if (renderer) {
+        diffuseTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    }
     diffuseTexture.needsUpdate = true;
 }
 
@@ -525,6 +572,49 @@ function generateBumpMap(imageData) {
     bumpTexture.needsUpdate = true;
 }
 
+// Generate displacement map
+function generateDisplacementMap(imageData) {
+    // Set canvas dimensions
+    displacementCanvas.width = imageData.width;
+    displacementCanvas.height = imageData.height;
+    
+    const ctx = displacementCanvas.getContext('2d');
+    const outputData = ctx.createImageData(imageData.width, imageData.height);
+    
+    // First, calculate the grayscale image
+    const grayscale = new Array(imageData.width * imageData.height);
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        const r = imageData.data[i];
+        const g = imageData.data[i + 1];
+        const b = imageData.data[i + 2];
+        
+        // Calculate brightness using a perceptual formula
+        const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+        grayscale[i / 4] = brightness;
+    }
+    
+    // Create a detailed displacement map with frequency analysis
+    const detailedHeightMap = createDetailedHeightMap(grayscale, imageData.width, imageData.height);
+    
+    // Transfer the height map to the output
+    for (let i = 0; i < detailedHeightMap.length; i++) {
+        const idx = i * 4;
+        const value = detailedHeightMap[i];
+        
+        outputData.data[idx] = value;
+        outputData.data[idx + 1] = value;
+        outputData.data[idx + 2] = value;
+        outputData.data[idx + 3] = 255; // Alpha
+    }
+    
+    // Put the processed data back to canvas
+    ctx.putImageData(outputData, 0, 0);
+    
+    // Create displacement texture
+    displacementTexture = new THREE.Texture(displacementCanvas);
+    displacementTexture.needsUpdate = true;
+}
+
 // Apply Gaussian blur to reduce noise
 function applyGaussianBlur(data, width, height) {
     const kernel = [
@@ -603,6 +693,49 @@ function detectEdges(data, width, height) {
     }
     
     return result;
+}
+
+// Create a detailed height map with frequency analysis
+function createDetailedHeightMap(grayscale, width, height) {
+    // Apply multiple levels of frequency detail
+    const baseLayer = applyGaussianBlur(grayscale, width, height);
+    const detailLayer = new Array(grayscale.length);
+    
+    // Calculate the detail layer by subtracting the blurred image from the original
+    for (let i = 0; i < grayscale.length; i++) {
+        detailLayer[i] = Math.max(0, grayscale[i] - baseLayer[i]);
+    }
+    
+    // Normalize detail layer
+    const maxDetail = Math.max(...detailLayer);
+    if (maxDetail > 0) {
+        for (let i = 0; i < detailLayer.length; i++) {
+            detailLayer[i] = (detailLayer[i] / maxDetail) * 127; // Scale to mid-range
+        }
+    }
+    
+    // Create the final height map by combining layers with an adaptive blend
+    const finalMap = new Array(grayscale.length);
+    for (let i = 0; i < grayscale.length; i++) {
+        // Use base layer as overall shape, add detail
+        finalMap[i] = Math.min(255, baseLayer[i] + detailLayer[i]);
+    }
+    
+    // Apply contrast enhancement
+    enhanceContrast(finalMap, 1.2);
+    
+    return finalMap;
+}
+
+// Enhance contrast of an array
+function enhanceContrast(array, factor) {
+    // Find the average value
+    const avg = array.reduce((sum, val) => sum + val, 0) / array.length;
+    
+    // Apply contrast adjustment centered around average
+    for (let i = 0; i < array.length; i++) {
+        array[i] = Math.max(0, Math.min(255, avg + (array[i] - avg) * factor));
+    }
 }
 
 // Update textures based on slider values
