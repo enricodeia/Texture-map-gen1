@@ -2,12 +2,15 @@
 let scene, camera, renderer, sphere, light;
 let diffuseTexture, normalTexture, bumpTexture;
 let originalImageData;
+let hasUploadedImage = false;
 
 // DOM Elements
 const uploadArea = document.getElementById('upload-area');
+const uploadContent = document.querySelector('.upload-content');
 const textureUpload = document.getElementById('texture-upload');
-const imagePreview = document.getElementById('image-preview');
+const previewOverlay = document.getElementById('preview-overlay');
 const uploadedImage = document.getElementById('uploaded-image');
+const deleteImageBtn = document.getElementById('delete-image');
 const sphereContainer = document.getElementById('sphere-container');
 const diffuseCanvas = document.getElementById('diffuse-map');
 const normalCanvas = document.getElementById('normal-map');
@@ -45,16 +48,20 @@ function init() {
 function initThreeJS() {
     // Create scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf9fafb);
+    scene.background = new THREE.Color(0x0f0f18);
 
     // Create camera
     camera = new THREE.PerspectiveCamera(75, sphereContainer.clientWidth / sphereContainer.clientHeight, 0.1, 1000);
     camera.position.z = 3;
 
     // Create renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(sphereContainer.clientWidth, sphereContainer.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.physicallyCorrectLights = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.outputEncoding = THREE.sRGBEncoding;
     sphereContainer.appendChild(renderer.domElement);
 
     // Create lighting
@@ -66,8 +73,28 @@ function initThreeJS() {
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
+    // Add hemisphere light for better color contrast
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.5);
+    scene.add(hemiLight);
+
     // Create a default sphere
     createSphere();
+    
+    // Add loading indicator until fully loaded
+    const loadingElement = document.createElement('div');
+    loadingElement.className = 'loading-indicator';
+    loadingElement.innerHTML = '<div class="spinner"></div><p>Initializing 3D environment...</p>';
+    sphereContainer.appendChild(loadingElement);
+    
+    // Remove loading indicator after a short delay
+    setTimeout(() => {
+        loadingElement.classList.add('fade-out');
+        setTimeout(() => {
+            if (loadingElement.parentNode) {
+                loadingElement.parentNode.removeChild(loadingElement);
+            }
+        }, 500);
+    }, 1500);
 
     // Set up orbit controls - using the correct THREE.OrbitControls syntax
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -123,7 +150,9 @@ function animate() {
     requestAnimationFrame(animate);
     
     // Update controls
-    controls.update();
+    if (window.controls) {
+        window.controls.update();
+    }
     
     // Add a subtle animation to the sphere
     if (sphere) {
@@ -164,8 +193,16 @@ function setupEventListeners() {
         }
     });
     
-    uploadArea.addEventListener('click', () => {
-        textureUpload.click();
+    uploadContent.addEventListener('click', () => {
+        if (!hasUploadedImage) {
+            textureUpload.click();
+        }
+    });
+    
+    // Delete image
+    deleteImageBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearImage();
     });
     
     // Sliders
@@ -184,6 +221,41 @@ function setupEventListeners() {
     downloadDiffuse.addEventListener('click', () => downloadTexture(diffuseCanvas, 'diffuse-map'));
     downloadNormal.addEventListener('click', () => downloadTexture(normalCanvas, 'normal-map'));
     downloadBump.addEventListener('click', () => downloadTexture(bumpCanvas, 'bump-map'));
+}
+
+// Clear the uploaded image
+function clearImage() {
+    // Reset the UI
+    previewOverlay.style.display = 'none';
+    uploadedImage.src = '';
+    hasUploadedImage = false;
+    
+    // Remove textures from sphere
+    if (sphere && sphere.material) {
+        sphere.material.map = null;
+        sphere.material.normalMap = null;
+        sphere.material.bumpMap = null;
+        sphere.material.needsUpdate = true;
+    }
+    
+    // Clear canvases
+    clearCanvas(diffuseCanvas);
+    clearCanvas(normalCanvas);
+    clearCanvas(bumpCanvas);
+    
+    // Reset textures
+    diffuseTexture = null;
+    normalTexture = null;
+    bumpTexture = null;
+    originalImageData = null;
+    
+    showNotification('Image removed', 'info');
+}
+
+// Clear a canvas
+function clearCanvas(canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 // Handle file upload
@@ -212,7 +284,8 @@ function processUploadedFile(file) {
     reader.onload = function(e) {
         // Display the image
         uploadedImage.src = e.target.result;
-        uploadedImage.style.display = 'block';
+        previewOverlay.style.display = 'flex';
+        hasUploadedImage = true;
         
         // Load the image to process it
         const img = new Image();
@@ -222,6 +295,9 @@ function processUploadedFile(file) {
             
             // Generate texture maps
             generateTextureMaps(img);
+            
+            // Apply to sphere
+            updateTextures();
             
             // Remove loading state
             setTimeout(() => {
@@ -288,9 +364,6 @@ function generateTextureMaps(img) {
     
     // Generate bump map
     generateBumpMap(originalImageData);
-    
-    // Update the 3D sphere
-    updateTextures();
 }
 
 // Generate diffuse map
@@ -352,11 +425,10 @@ function generateNormalMap(imageData) {
             }
             
             // Convert gradient to normal vector
-            // The Z component is arbitrary but affects the strength of the normal map
-            const scale = 1.0; // Adjust scale for normal strength
+            const scale = 2.5; // Increased scale for stronger normal effect
             const nx = -gx * scale;
             const ny = -gy * scale;
-            const nz = 1.0;
+            const nz = 255; // Higher Z value for more pronounced effect
             
             // Normalize
             const length = Math.sqrt(nx * nx + ny * ny + nz * nz);
@@ -378,7 +450,7 @@ function generateNormalMap(imageData) {
     normalTexture.needsUpdate = true;
 }
 
-// Generate bump map
+// Generate bump map - improved algorithm
 function generateBumpMap(imageData) {
     // Set canvas dimensions
     bumpCanvas.width = imageData.width;
@@ -387,21 +459,38 @@ function generateBumpMap(imageData) {
     const ctx = bumpCanvas.getContext('2d');
     const outputData = ctx.createImageData(imageData.width, imageData.height);
     
-    // Convert to grayscale for bump map (based on brightness)
+    // First, calculate the grayscale image
+    const grayscale = new Array(imageData.width * imageData.height);
     for (let i = 0; i < imageData.data.length; i += 4) {
-        // Calculate brightness
         const r = imageData.data[i];
         const g = imageData.data[i + 1];
         const b = imageData.data[i + 2];
         
-        // Calculate brightness (simple average)
-        const brightness = (r + g + b) / 3;
+        // Calculate brightness using a more perceptual formula
+        const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+        grayscale[i / 4] = brightness;
+    }
+    
+    // Apply Gaussian blur to reduce noise
+    const blurred = applyGaussianBlur(grayscale, imageData.width, imageData.height);
+    
+    // Apply edge detection to emphasize height transitions
+    const edges = detectEdges(blurred, imageData.width, imageData.height);
+    
+    // Combine original brightness and edges to create the bump map
+    for (let i = 0; i < edges.length; i++) {
+        const idx = i * 4;
+        const edgeValue = edges[i];
+        const originalValue = grayscale[i];
         
-        // Set grayscale value
-        outputData.data[i] = brightness;
-        outputData.data[i + 1] = brightness;
-        outputData.data[i + 2] = brightness;
-        outputData.data[i + 3] = 255; // Alpha
+        // Mix the edge map and the original grayscale
+        const bumpValue = Math.max(0, Math.min(255, 
+            originalValue * 0.7 + edgeValue * 0.3));
+        
+        outputData.data[idx] = bumpValue;
+        outputData.data[idx + 1] = bumpValue;
+        outputData.data[idx + 2] = bumpValue;
+        outputData.data[idx + 3] = 255; // Alpha
     }
     
     // Put the processed data back to canvas
@@ -412,6 +501,86 @@ function generateBumpMap(imageData) {
     bumpTexture.needsUpdate = true;
 }
 
+// Apply Gaussian blur to reduce noise
+function applyGaussianBlur(data, width, height) {
+    const kernel = [
+        0.0625, 0.125, 0.0625,
+        0.125, 0.25, 0.125,
+        0.0625, 0.125, 0.0625
+    ];
+    
+    const result = new Array(width * height);
+    
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            let sum = 0;
+            
+            for (let ky = -1; ky <= 1; ky++) {
+                for (let kx = -1; kx <= 1; kx++) {
+                    const px = Math.min(width - 1, Math.max(0, x + kx));
+                    const py = Math.min(height - 1, Math.max(0, y + ky));
+                    
+                    const idx = py * width + px;
+                    sum += data[idx] * kernel[(ky + 1) * 3 + (kx + 1)];
+                }
+            }
+            
+            result[y * width + x] = sum;
+        }
+    }
+    
+    return result;
+}
+
+// Detect edges for the bump map
+function detectEdges(data, width, height) {
+    const sobelX = [
+        -1, 0, 1,
+        -2, 0, 2,
+        -1, 0, 1
+    ];
+    
+    const sobelY = [
+        -1, -2, -1,
+        0, 0, 0,
+        1, 2, 1
+    ];
+    
+    const result = new Array(width * height);
+    
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            let gx = 0;
+            let gy = 0;
+            
+            for (let ky = -1; ky <= 1; ky++) {
+                for (let kx = -1; kx <= 1; kx++) {
+                    const px = Math.min(width - 1, Math.max(0, x + kx));
+                    const py = Math.min(height - 1, Math.max(0, y + ky));
+                    
+                    const idx = py * width + px;
+                    gx += data[idx] * sobelX[(ky + 1) * 3 + (kx + 1)];
+                    gy += data[idx] * sobelY[(ky + 1) * 3 + (kx + 1)];
+                }
+            }
+            
+            // Calculate the magnitude of the gradient
+            const mag = Math.sqrt(gx * gx + gy * gy);
+            result[y * width + x] = mag;
+        }
+    }
+    
+    // Normalize to 0-255 range
+    const max = Math.max(...result);
+    if (max > 0) {
+        for (let i = 0; i < result.length; i++) {
+            result[i] = (result[i] / max) * 255;
+        }
+    }
+    
+    return result;
+}
+
 // Update textures based on slider values
 function updateTextures() {
     // Update display values
@@ -420,25 +589,17 @@ function updateTextures() {
     bumpValue.textContent = parseFloat(bumpStrength.value).toFixed(1);
     
     if (sphere && sphere.material) {
-        // Update diffuse intensity
-        if (sphere.material.map) {
-            sphere.material.map.intensity = parseFloat(diffuseStrength.value);
-            sphere.material.map.needsUpdate = true;
-        }
-        
         // Update normal map intensity
         if (sphere.material.normalMap) {
             sphere.material.normalScale.set(
                 parseFloat(normalStrength.value),
                 parseFloat(normalStrength.value)
             );
-            sphere.material.normalMap.needsUpdate = true;
         }
         
         // Update bump map intensity
         if (sphere.material.bumpMap) {
             sphere.material.bumpScale = parseFloat(bumpStrength.value);
-            sphere.material.bumpMap.needsUpdate = true;
         }
         
         sphere.material.needsUpdate = true;
@@ -471,10 +632,17 @@ function updateLightPosition() {
 
 // Download texture as image
 function downloadTexture(canvas, filename) {
+    if (!hasUploadedImage) {
+        showNotification('Please upload a texture first', 'error');
+        return;
+    }
+    
     const link = document.createElement('a');
     link.download = `${filename}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+    
+    showNotification(`${filename.split('-')[0]} map downloaded`, 'success');
 }
 
 // Initialize the application when the DOM is loaded
