@@ -81,17 +81,13 @@ function initThreeJS() {
     sphereContainer.appendChild(renderer.domElement);
 
     // Create lighting
-    light = new THREE.DirectionalLight(0xffffff, 1);
+    light = new THREE.DirectionalLight(0xffffff, 1.5);
     light.position.set(5, 5, 5);
     scene.add(light);
 
     // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
-
-    // Add hemisphere light for better color contrast
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x080820, 0.5);
-    scene.add(hemiLight);
 
     // Create a default sphere
     createSphere();
@@ -127,43 +123,53 @@ function createSphere() {
     }
 
     // Create geometry with higher segment count for better displacement
-    const geometry = new THREE.SphereGeometry(1, 128, 128);
+    const geometry = new THREE.SphereGeometry(1, 64, 64);
     
     // Create material
     const material = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         roughness: parseFloat(roughness.value),
-        metalness: parseFloat(metalness.value),
-        flatShading: false
+        metalness: parseFloat(metalness.value)
     });
 
-    // Apply textures if available
-    if (diffuseTexture) {
-        material.map = diffuseTexture;
-        material.map.needsUpdate = true;
-    }
+    // First make sure all textures are updated
+    if (diffuseTexture) diffuseTexture.needsUpdate = true;
+    if (normalTexture) normalTexture.needsUpdate = true;
+    if (bumpTexture) bumpTexture.needsUpdate = true;
+    if (displacementTexture) displacementTexture.needsUpdate = true;
+
+    // Apply textures - explicitly set them
+    material.map = diffuseTexture;
+    material.normalMap = normalTexture;
+    material.bumpMap = bumpTexture;
+    material.displacementMap = displacementTexture;
     
+    // Update material parameters
     if (normalTexture) {
-        material.normalMap = normalTexture;
         material.normalScale.set(parseFloat(normalStrength.value), parseFloat(normalStrength.value));
-        material.normalMap.needsUpdate = true;
     }
     
     if (bumpTexture) {
-        material.bumpMap = bumpTexture;
         material.bumpScale = parseFloat(bumpStrength.value);
-        material.bumpMap.needsUpdate = true;
     }
     
     if (displacementTexture) {
-        material.displacementMap = displacementTexture;
         material.displacementScale = parseFloat(displacementStrength.value);
-        material.displacementMap.needsUpdate = true;
     }
+
+    // Ensure material knows it needs updating
+    material.needsUpdate = true;
 
     // Create mesh
     sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
+    
+    console.log("Sphere created with textures:", {
+        diffuse: !!material.map,
+        normal: !!material.normalMap,
+        bump: !!material.bumpMap,
+        displacement: !!material.displacementMap
+    });
 }
 
 // Animation loop
@@ -324,20 +330,17 @@ function processUploadedFile(file) {
                     // Generate texture maps
                     generateTextureMaps(img);
                     
-                    // Apply to sphere
-                    updateTextures();
+                    // Recreate the sphere to apply textures
+                    createSphere();
                     
                     // Remove loading state
                     setTimeout(() => {
                         uploadArea.classList.remove('processing');
-                        loadingEl.classList.add('fade-out');
-                        setTimeout(() => {
-                            if (loadingEl.parentNode) {
-                                loadingEl.parentNode.removeChild(loadingEl);
-                            }
-                            showNotification('Texture maps generated successfully!', 'success');
-                        }, 500);
-                    }, 1000);
+                        if (loadingEl.parentNode) {
+                            loadingEl.parentNode.removeChild(loadingEl);
+                        }
+                        showNotification('Texture maps generated successfully!', 'success');
+                    }, 500);
                 } catch (error) {
                     console.error('Error processing image:', error);
                     handleProcessingError(loadingEl);
@@ -434,9 +437,11 @@ function generateDiffuseMap(img) {
         diffuseTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     }
     diffuseTexture.needsUpdate = true;
+    
+    console.log("Diffuse map generated");
 }
 
-// Generate normal map
+// Generate normal map with enhanced detail
 function generateNormalMap(imageData) {
     // Set canvas dimensions
     normalCanvas.width = imageData.width;
@@ -480,10 +485,10 @@ function generateNormalMap(imageData) {
             }
             
             // Convert gradient to normal vector
-            const scale = 2.5; // Increased scale for stronger normal effect
+            const scale = 3.0; // Increased scale for stronger normal effect
             const nx = -gx * scale;
             const ny = -gy * scale;
-            const nz = 255; // Higher Z value for more pronounced effect
+            const nz = 200; // Higher Z value for more pronounced effect
             
             // Normalize
             const length = Math.sqrt(nx * nx + ny * ny + nz * nz);
@@ -503,9 +508,11 @@ function generateNormalMap(imageData) {
     // Create normal texture
     normalTexture = new THREE.Texture(normalCanvas);
     normalTexture.needsUpdate = true;
+    
+    console.log("Normal map generated");
 }
 
-// Generate bump map - improved algorithm
+// Generate bump map - simplified algorithm
 function generateBumpMap(imageData) {
     // Set canvas dimensions
     bumpCanvas.width = imageData.width;
@@ -514,38 +521,20 @@ function generateBumpMap(imageData) {
     const ctx = bumpCanvas.getContext('2d');
     const outputData = ctx.createImageData(imageData.width, imageData.height);
     
-    // First, calculate the grayscale image
-    const grayscale = new Array(imageData.width * imageData.height);
+    // Simple grayscale conversion
     for (let i = 0; i < imageData.data.length; i += 4) {
         const r = imageData.data[i];
         const g = imageData.data[i + 1];
         const b = imageData.data[i + 2];
         
-        // Calculate brightness using a more perceptual formula
-        const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-        grayscale[i / 4] = brightness;
-    }
-    
-    // Apply Gaussian blur to reduce noise
-    const blurred = applyGaussianBlur(grayscale, imageData.width, imageData.height);
-    
-    // Apply edge detection to emphasize height transitions
-    const edges = detectEdges(blurred, imageData.width, imageData.height);
-    
-    // Combine original brightness and edges to create the bump map
-    for (let i = 0; i < edges.length; i++) {
-        const idx = i * 4;
-        const edgeValue = edges[i];
-        const originalValue = grayscale[i];
+        // Calculate brightness (simple grayscale)
+        const brightness = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
         
-        // Mix the edge map and the original grayscale
-        const bumpValue = Math.max(0, Math.min(255, 
-            originalValue * 0.7 + edgeValue * 0.3));
-        
-        outputData.data[idx] = bumpValue;
-        outputData.data[idx + 1] = bumpValue;
-        outputData.data[idx + 2] = bumpValue;
-        outputData.data[idx + 3] = 255; // Alpha
+        // Set grayscale value
+        outputData.data[i] = brightness;
+        outputData.data[i + 1] = brightness;
+        outputData.data[i + 2] = brightness;
+        outputData.data[i + 3] = 255; // Alpha
     }
     
     // Put the processed data back to canvas
@@ -554,9 +543,11 @@ function generateBumpMap(imageData) {
     // Create bump texture
     bumpTexture = new THREE.Texture(bumpCanvas);
     bumpTexture.needsUpdate = true;
+    
+    console.log("Bump map generated");
 }
 
-// Generate displacement map
+// Generate displacement map - simplified
 function generateDisplacementMap(imageData) {
     // Set canvas dimensions
     displacementCanvas.width = imageData.width;
@@ -565,30 +556,22 @@ function generateDisplacementMap(imageData) {
     const ctx = displacementCanvas.getContext('2d');
     const outputData = ctx.createImageData(imageData.width, imageData.height);
     
-    // First, calculate the grayscale image
-    const grayscale = new Array(imageData.width * imageData.height);
+    // Simple grayscale conversion with contrast enhancement
     for (let i = 0; i < imageData.data.length; i += 4) {
         const r = imageData.data[i];
         const g = imageData.data[i + 1];
         const b = imageData.data[i + 2];
         
-        // Calculate brightness using a perceptual formula
-        const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-        grayscale[i / 4] = brightness;
-    }
-    
-    // Create a detailed displacement map with frequency analysis
-    const detailedHeightMap = createDetailedHeightMap(grayscale, imageData.width, imageData.height);
-    
-    // Transfer the height map to the output
-    for (let i = 0; i < detailedHeightMap.length; i++) {
-        const idx = i * 4;
-        const value = detailedHeightMap[i];
+        // Calculate brightness
+        let brightness = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
         
-        outputData.data[idx] = value;
-        outputData.data[idx + 1] = value;
-        outputData.data[idx + 2] = value;
-        outputData.data[idx + 3] = 255; // Alpha
+        // Enhance contrast
+        brightness = Math.max(0, Math.min(255, (brightness - 128) * 1.2 + 128));
+        
+        outputData.data[i] = brightness;
+        outputData.data[i + 1] = brightness;
+        outputData.data[i + 2] = brightness;
+        outputData.data[i + 3] = 255; // Alpha
     }
     
     // Put the processed data back to canvas
@@ -597,6 +580,8 @@ function generateDisplacementMap(imageData) {
     // Create displacement texture
     displacementTexture = new THREE.Texture(displacementCanvas);
     displacementTexture.needsUpdate = true;
+    
+    console.log("Displacement map generated");
 }
 
 // Apply Gaussian blur to reduce noise
@@ -730,6 +715,7 @@ function updateTextures() {
     bumpValue.textContent = parseFloat(bumpStrength.value).toFixed(1);
     displacementValue.textContent = parseFloat(displacementStrength.value).toFixed(1);
     
+    // Check if we need to recreate the sphere to apply updated textures
     if (sphere && sphere.material) {
         // Update normal map intensity
         if (sphere.material.normalMap) {
@@ -749,7 +735,11 @@ function updateTextures() {
             sphere.material.displacementScale = parseFloat(displacementStrength.value);
         }
         
+        // Make sure material updates
         sphere.material.needsUpdate = true;
+    } else {
+        // If sphere doesn't exist, create it
+        createSphere();
     }
 }
 
