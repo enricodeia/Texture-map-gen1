@@ -69,10 +69,12 @@ function initThreeJS() {
     // Create a default sphere
     createSphere();
 
-    // Set up orbit controls
+    // Set up orbit controls - using the correct THREE.OrbitControls syntax
     const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.0;
 
     // Handle window resize
     window.addEventListener('resize', onWindowResize);
@@ -120,9 +122,12 @@ function createSphere() {
 function animate() {
     requestAnimationFrame(animate);
     
-    // Rotate the sphere slowly
+    // Update controls
+    controls.update();
+    
+    // Add a subtle animation to the sphere
     if (sphere) {
-        sphere.rotation.y += 0.002;
+        sphere.rotation.y += 0.001;
     }
     
     renderer.render(scene, camera);
@@ -191,9 +196,16 @@ function handleFileUpload(e) {
 // Process uploaded file
 function processUploadedFile(file) {
     if (!file.type.match('image.*')) {
-        alert('Please upload an image file.');
+        showNotification('Please upload an image file.', 'error');
         return;
     }
+    
+    // Show loading state
+    uploadArea.classList.add('processing');
+    const loadingEl = document.createElement('div');
+    loadingEl.className = 'processing-indicator';
+    loadingEl.innerHTML = '<div class="spinner"></div><p>Processing texture...</p>';
+    document.body.appendChild(loadingEl);
     
     const reader = new FileReader();
     
@@ -210,11 +222,50 @@ function processUploadedFile(file) {
             
             // Generate texture maps
             generateTextureMaps(img);
+            
+            // Remove loading state
+            setTimeout(() => {
+                uploadArea.classList.remove('processing');
+                loadingEl.classList.add('fade-out');
+                setTimeout(() => {
+                    if (loadingEl.parentNode) {
+                        loadingEl.parentNode.removeChild(loadingEl);
+                    }
+                    showNotification('Texture maps generated successfully!', 'success');
+                }, 500);
+            }, 1000);
         };
         img.src = e.target.result;
     };
     
     reader.readAsDataURL(file);
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        <p>${message}</p>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    // Animate out after delay
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
 }
 
 // Get image data from an image element
