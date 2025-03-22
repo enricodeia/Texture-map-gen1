@@ -16,11 +16,13 @@ const sphereContainer = document.getElementById('sphere-container');
 const diffuseCanvas = document.getElementById('diffuse-map');
 const normalCanvas = document.getElementById('normal-map');
 const bumpCanvas = document.getElementById('bump-map');
+const displacementCanvas = document.getElementById('displacement-map');
 
 // Control Elements
 const diffuseStrength = document.getElementById('diffuse-strength');
 const normalStrength = document.getElementById('normal-strength');
 const bumpStrength = document.getElementById('bump-strength');
+const displacementStrength = document.getElementById('displacement-strength');
 const roughness = document.getElementById('roughness');
 const metalness = document.getElementById('metalness');
 const lightX = document.getElementById('light-x');
@@ -31,6 +33,7 @@ const lightZ = document.getElementById('light-z');
 const diffuseValue = document.getElementById('diffuse-value');
 const normalValue = document.getElementById('normal-value');
 const bumpValue = document.getElementById('bump-value');
+const displacementValue = document.getElementById('displacement-value');
 const roughnessValue = document.getElementById('roughness-value');
 const metalnessValue = document.getElementById('metalness-value');
 
@@ -38,6 +41,7 @@ const metalnessValue = document.getElementById('metalness-value');
 const downloadDiffuse = document.getElementById('download-diffuse');
 const downloadNormal = document.getElementById('download-normal');
 const downloadBump = document.getElementById('download-bump');
+const downloadDisplacement = document.getElementById('download-displacement');
 
 // Initialize the application
 function init() {
@@ -49,7 +53,7 @@ function init() {
 function initThreeJS() {
     // Create scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f0f18);
+    scene.background = new THREE.Color(0x0c0c16);
 
     // Create camera
     camera = new THREE.PerspectiveCamera(75, sphereContainer.clientWidth / sphereContainer.clientHeight, 0.1, 1000);
@@ -98,7 +102,7 @@ function initThreeJS() {
     }, 1500);
 
     // Set up orbit controls - using the correct THREE.OrbitControls syntax
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.autoRotate = true;
@@ -118,27 +122,39 @@ function createSphere() {
         scene.remove(sphere);
     }
 
-    // Create geometry
-    const geometry = new THREE.SphereGeometry(1, 64, 64);
+    // Create geometry with higher segment count for better displacement
+    const geometry = new THREE.SphereGeometry(1, 128, 128);
     
     // Create material
     const material = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         roughness: parseFloat(roughness.value),
-        metalness: parseFloat(metalness.value)
+        metalness: parseFloat(metalness.value),
+        flatShading: false
     });
 
     // Apply textures if available
     if (diffuseTexture) {
         material.map = diffuseTexture;
+        material.map.needsUpdate = true;
     }
+    
     if (normalTexture) {
         material.normalMap = normalTexture;
         material.normalScale.set(parseFloat(normalStrength.value), parseFloat(normalStrength.value));
+        material.normalMap.needsUpdate = true;
     }
+    
     if (bumpTexture) {
         material.bumpMap = bumpTexture;
         material.bumpScale = parseFloat(bumpStrength.value);
+        material.bumpMap.needsUpdate = true;
+    }
+    
+    if (displacementTexture) {
+        material.displacementMap = displacementTexture;
+        material.displacementScale = parseFloat(displacementStrength.value);
+        material.displacementMap.needsUpdate = true;
     }
 
     // Create mesh
@@ -151,9 +167,7 @@ function animate() {
     requestAnimationFrame(animate);
     
     // Update controls
-    if (window.controls) {
-        window.controls.update();
-    }
+    controls.update();
     
     // Add a subtle animation to the sphere
     if (sphere) {
@@ -210,6 +224,7 @@ function setupEventListeners() {
     diffuseStrength.addEventListener('input', updateTextures);
     normalStrength.addEventListener('input', updateTextures);
     bumpStrength.addEventListener('input', updateTextures);
+    displacementStrength.addEventListener('input', updateTextures);
     roughness.addEventListener('input', updateMaterial);
     metalness.addEventListener('input', updateMaterial);
     
@@ -222,6 +237,7 @@ function setupEventListeners() {
     downloadDiffuse.addEventListener('click', () => downloadTexture(diffuseCanvas, 'diffuse-map'));
     downloadNormal.addEventListener('click', () => downloadTexture(normalCanvas, 'normal-map'));
     downloadBump.addEventListener('click', () => downloadTexture(bumpCanvas, 'bump-map'));
+    downloadDisplacement.addEventListener('click', () => downloadTexture(displacementCanvas, 'displacement-map'));
 }
 
 // Clear the uploaded image
@@ -243,11 +259,13 @@ function clearImage() {
     clearCanvas(diffuseCanvas);
     clearCanvas(normalCanvas);
     clearCanvas(bumpCanvas);
+    clearCanvas(displacementCanvas);
     
     // Reset textures
     diffuseTexture = null;
     normalTexture = null;
     bumpTexture = null;
+    displacementTexture = null;
     originalImageData = null;
     
     showNotification('Image removed', 'info');
@@ -365,6 +383,9 @@ function generateTextureMaps(img) {
     
     // Generate bump map
     generateBumpMap(originalImageData);
+    
+    // Generate displacement map
+    generateDisplacementMap(originalImageData);
 }
 
 // Generate diffuse map
@@ -379,6 +400,8 @@ function generateDiffuseMap(img) {
     
     // Create diffuse texture
     diffuseTexture = new THREE.Texture(diffuseCanvas);
+    diffuseTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    diffuseTexture.encoding = THREE.sRGBEncoding;
     diffuseTexture.needsUpdate = true;
 }
 
@@ -588,6 +611,7 @@ function updateTextures() {
     diffuseValue.textContent = parseFloat(diffuseStrength.value).toFixed(1);
     normalValue.textContent = parseFloat(normalStrength.value).toFixed(1);
     bumpValue.textContent = parseFloat(bumpStrength.value).toFixed(1);
+    displacementValue.textContent = parseFloat(displacementStrength.value).toFixed(1);
     
     if (sphere && sphere.material) {
         // Update normal map intensity
@@ -601,6 +625,11 @@ function updateTextures() {
         // Update bump map intensity
         if (sphere.material.bumpMap) {
             sphere.material.bumpScale = parseFloat(bumpStrength.value);
+        }
+        
+        // Update displacement map intensity
+        if (sphere.material.displacementMap) {
+            sphere.material.displacementScale = parseFloat(displacementStrength.value);
         }
         
         sphere.material.needsUpdate = true;
