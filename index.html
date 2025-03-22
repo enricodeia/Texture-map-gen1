@@ -10,8 +10,8 @@
 <body>
     <div class="app-container">
         <header>
-            <h1>Texture Map Generator</h1>
-            <p>Generate normal, diffuse, and bump maps from any texture</p>
+            <h1>3D Texture Lab</h1>
+            <p>Create professional diffuse, normal & bump maps instantly</p>
         </header>
 
         <main>
@@ -21,6 +21,7 @@
                     <p>Drag & drop your texture image or</p>
                     <label for="texture-upload" class="upload-btn">Browse Files</label>
                     <input type="file" id="texture-upload" accept="image/*" hidden>
+                    <p class="upload-hint">Supported formats: JPG, PNG, WebP</p>
                 </div>
                 <div class="preview-image" id="image-preview">
                     <img id="uploaded-image" src="" alt="Uploaded texture">
@@ -125,7 +126,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/OrbitControls/2.0.0/OrbitControls.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
