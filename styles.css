@@ -3,28 +3,13 @@
     --bg-dark: #0d1117;
     --bg-darker: #010409;
     --bg-light: #161b22;
-    --primary-green: #238636;
     --primary-blue: #1f6feb;
-    --primary-orange: #f0883e;
+    --primary-purple: #8957e5;
+    --primary-green: #2ea043;
     --text-primary: #c9d1d9;
     --text-secondary: #8b949e;
     --border-color: #30363d;
-    --hover-color: #2ea043;
     --danger-color: #da3633;
-    
-    /* Spacing */
-    --space-1: 0.25rem;
-    --space-2: 0.5rem;
-    --space-3: 0.75rem;
-    --space-4: 1rem;
-    --space-6: 1.5rem;
-    --space-8: 2rem;
-    --space-10: 2.5rem;
-    
-    /* Radius */
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
 }
 
 * {
@@ -43,7 +28,7 @@ body {
 .app-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: var(--space-4);
+    padding: 1rem;
 }
 
 /* Navbar */
@@ -51,15 +36,15 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-4) 0;
-    margin-bottom: var(--space-6);
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--border-color);
 }
 
 .nav-brand h1 {
     font-size: 1.5rem;
     color: var(--text-primary);
-    margin-bottom: var(--space-1);
+    margin-bottom: 0.25rem;
 }
 
 .nav-brand p {
@@ -74,14 +59,14 @@ body {
 
 main {
     display: grid;
-    gap: var(--space-6);
+    gap: 1.5rem;
 }
 
 /* Top container - upload and preview */
 .top-container {
     display: grid;
     grid-template-columns: 1fr 2fr;
-    gap: var(--space-4);
+    gap: 1rem;
 }
 
 .upload-section {
@@ -90,9 +75,9 @@ main {
 
 .upload-area {
     background-color: var(--bg-darker);
-    border: 1px dashed var(--border-color);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
     cursor: pointer;
     height: 350px;
     display: flex;
@@ -120,16 +105,16 @@ main {
 .upload-area i {
     font-size: 2.5rem;
     color: var(--primary-blue);
-    margin-bottom: var(--space-4);
+    margin-bottom: 1rem;
 }
 
 .upload-area p {
-    margin-bottom: var(--space-3);
+    margin-bottom: 0.75rem;
     color: var(--text-secondary);
 }
 
 .upload-hint {
-    margin-top: var(--space-2);
+    margin-top: 0.5rem !important;
     font-size: 0.8rem;
     opacity: 0.7;
 }
@@ -137,8 +122,8 @@ main {
 .upload-btn {
     background-color: var(--primary-blue);
     color: var(--text-primary);
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
     cursor: pointer;
     border: none;
     transition: background-color 0.2s;
@@ -160,7 +145,7 @@ main {
     align-items: center;
     justify-content: center;
     z-index: 3;
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     overflow: hidden;
 }
 
@@ -173,8 +158,8 @@ main {
 
 .delete-btn {
     position: absolute;
-    top: var(--space-2);
-    right: var(--space-2);
+    top: 0.5rem;
+    right: 0.5rem;
     background-color: var(--danger-color);
     color: var(--text-primary);
     border: none;
@@ -198,7 +183,7 @@ main {
 /* 3D Preview */
 .preview-3d {
     background-color: var(--bg-darker);
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     height: 350px;
     overflow: hidden;
     position: relative;
@@ -214,13 +199,13 @@ main {
 /* Controls */
 .controls-container {
     background-color: var(--bg-light);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
+    border-radius: 8px;
+    padding: 1rem;
     border: 1px solid var(--border-color);
 }
 
 .controls-container h3 {
-    margin-bottom: var(--space-4);
+    margin-bottom: 1rem;
     font-weight: 600;
     color: var(--text-primary);
     font-size: 1.1rem;
@@ -229,7 +214,7 @@ main {
 .controls-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-3);
+    gap: 0.75rem;
 }
 
 .light-group {
@@ -238,14 +223,14 @@ main {
 
 .control-group {
     background-color: var(--bg-darker);
-    border-radius: var(--radius-sm);
-    padding: var(--space-3);
+    border-radius: 4px;
+    padding: 0.75rem;
     border: 1px solid var(--border-color);
 }
 
 .control-group label {
     display: block;
-    margin-bottom: var(--space-2);
+    margin-bottom: 0.5rem;
     font-weight: 600;
     color: var(--text-secondary);
     font-size: 0.85rem;
@@ -254,7 +239,7 @@ main {
 .slider-container {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: 0.5rem;
 }
 
 input[type="range"] {
@@ -302,7 +287,7 @@ input[type="range"]::-moz-range-thumb:hover {
     color: var(--primary-blue);
     background-color: var(--bg-darker);
     padding: 2px 6px;
-    border-radius: var(--radius-sm);
+    border-radius: 4px;
     font-weight: 600;
     font-size: 0.8rem;
     border: 1px solid var(--border-color);
@@ -311,13 +296,13 @@ input[type="range"]::-moz-range-thumb:hover {
 .light-controls {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-2);
+    gap: 0.5rem;
 }
 
 .light-control {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
+    gap: 0.25rem;
 }
 
 .light-control span {
@@ -331,13 +316,13 @@ input[type="range"]::-moz-range-thumb:hover {
 .map-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-4);
+    gap: 1rem;
 }
 
 .map-preview {
     background-color: var(--bg-light);
-    border-radius: var(--radius-md);
-    padding: var(--space-3);
+    border-radius: 8px;
+    padding: 0.75rem;
     position: relative;
     border: 1px solid var(--border-color);
 }
@@ -346,7 +331,7 @@ input[type="range"]::-moz-range-thumb:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-2);
+    margin-bottom: 0.5rem;
 }
 
 .map-header h3 {
@@ -358,7 +343,7 @@ input[type="range"]::-moz-range-thumb:hover {
 .map-preview canvas {
     width: 100%;
     height: 160px;
-    border-radius: var(--radius-sm);
+    border-radius: 4px;
     background-color: var(--bg-darker);
     border: 1px solid var(--border-color);
 }
@@ -369,7 +354,7 @@ input[type="range"]::-moz-range-thumb:hover {
     border: none;
     width: 24px;
     height: 24px;
-    border-radius: var(--radius-sm);
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -384,10 +369,10 @@ input[type="range"]::-moz-range-thumb:hover {
 
 /* Footer */
 footer {
-    margin-top: var(--space-6);
+    margin-top: 1.5rem;
     text-align: center;
     color: var(--text-secondary);
-    padding: var(--space-3);
+    padding: 0.75rem;
     border-top: 1px solid var(--border-color);
     font-size: 0.9rem;
 }
@@ -422,7 +407,7 @@ footer a:hover {
 }
 
 .loading-indicator p {
-    margin-top: var(--space-3);
+    margin-top: 0.75rem;
     color: var(--primary-blue);
 }
 
@@ -456,11 +441,11 @@ footer a:hover {
     bottom: 20px;
     right: 20px;
     background-color: var(--bg-darker);
-    border-radius: var(--radius-sm);
-    padding: var(--space-3);
+    border-radius: 4px;
+    padding: 0.75rem;
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: 0.5rem;
     transform: translateY(100px);
     opacity: 0;
     transition: transform 0.3s ease, opacity 0.3s ease;
@@ -539,7 +524,7 @@ footer a:hover {
     }
     
     .nav-actions {
-        margin-top: var(--space-3);
+        margin-top: 0.75rem;
     }
     
     .controls-grid,
