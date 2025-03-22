@@ -16,6 +16,20 @@ const diffuseCanvas = document.getElementById('diffuse-map');
 const normalCanvas = document.getElementById('normal-map');
 const bumpCanvas = document.getElementById('bump-map');
 const displacementCanvas = document.getElementById('displacement-map');
+const exportAllBtn = document.getElementById('export-all');
+
+// DOM Elements
+const uploadArea = document.getElementById('upload-area');
+const uploadContent = document.querySelector('.upload-content');
+const textureUpload = document.getElementById('texture-upload');
+const previewOverlay = document.getElementById('preview-overlay');
+const uploadedImage = document.getElementById('uploaded-image');
+const deleteImageBtn = document.getElementById('delete-image');
+const sphereContainer = document.getElementById('sphere-container');
+const diffuseCanvas = document.getElementById('diffuse-map');
+const normalCanvas = document.getElementById('normal-map');
+const bumpCanvas = document.getElementById('bump-map');
+const displacementCanvas = document.getElementById('displacement-map');
 
 // Control Elements
 const diffuseStrength = document.getElementById('diffuse-strength');
@@ -250,6 +264,11 @@ function setupEventListeners() {
     downloadNormal.addEventListener('click', () => downloadTexture(normalCanvas, 'normal-map'));
     downloadBump.addEventListener('click', () => downloadTexture(bumpCanvas, 'bump-map'));
     downloadDisplacement.addEventListener('click', () => downloadTexture(displacementCanvas, 'displacement-map'));
+    
+    // Export all button
+    if (exportAllBtn) {
+        exportAllBtn.addEventListener('click', exportAllTextures);
+    }
 }
 
 // Clear the uploaded image
