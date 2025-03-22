@@ -3,7 +3,6 @@ let scene, camera, renderer, sphere, light;
 let diffuseTexture, normalTexture, bumpTexture, displacementTexture;
 let originalImageData;
 let hasUploadedImage = false;
-let controls;
 
 // DOM Elements
 const uploadArea = document.getElementById('upload-area');
@@ -70,6 +69,7 @@ function initThreeJS() {
     // Create camera
     camera = new THREE.PerspectiveCamera(75, sphereContainer.clientWidth / sphereContainer.clientHeight, 0.1, 1000);
     camera.position.z = 3;
+    camera.position.y = 0.5; // Slight angle for better viewing
 
     // Create renderer
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -111,18 +111,6 @@ function initThreeJS() {
             }
         }, 500);
     }, 1500);
-
-    // Set up orbit controls
-    if (typeof THREE.OrbitControls === 'undefined') {
-        console.error('THREE.OrbitControls is not defined. Please check if OrbitControls is loaded correctly.');
-        showNotification('Error loading 3D controls. Limited functionality available.', 'error');
-    } else {
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 1.0;
-    }
 
     // Handle window resize
     window.addEventListener('resize', onWindowResize);
@@ -182,14 +170,10 @@ function createSphere() {
 function animate() {
     requestAnimationFrame(animate);
     
-    // Update controls if they exist
-    if (controls) {
-        controls.update();
-    }
-    
-    // Add a subtle animation to the sphere
+    // Add automatic rotation to the sphere
     if (sphere) {
-        sphere.rotation.y += 0.001;
+        sphere.rotation.y += 0.004;
+        sphere.rotation.x += 0.0005;
     }
     
     if (renderer) {
